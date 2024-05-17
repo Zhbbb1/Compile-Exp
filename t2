@@ -1,0 +1,396 @@
+#include<iostream>
+#include<string>
+#include<sstream>
+#include<fstream> 
+#include<vector>
+
+using namespace std;
+vector<string> str;
+//每个状态的函数
+int findTerminal = 0;
+void P(int treeWidth);
+void L(int treeWidth);
+void P1(int treeWidth);
+void S(int treeWidth);
+void S1(int treeWidth);
+void C(int treeWidth);
+void C1(int treeWidth);
+void E(int treeWidth);
+void E1(int treeWidth);
+void T(int treeWidth);
+void T1(int treeWidth);
+void F(int treeWidth);
+//检查一个字符串是否符合标识符的规则
+bool isId(string str) {
+	for (int i = 0; i < str.size(); i++) {
+		if ((str[i] >= '0' && str[i] <= '9') || (str[i] >= 'A' && str[i] <= 'Z') || (str[i] >= 'a' && str[i] <= 'z'));
+		else return false;
+	}
+	return true;
+}
+//构建语法树的节点并在控制台输出
+void BuiltTree(string s, int treeWidth) {//s 是要输出的节点内容，treeWidth 是用来确定节点在树中的缩进层数的参数
+	for (int i = 0; i < treeWidth; i++) {
+		cout << " ";
+	}
+	cout << s << endl;//根据 treeWidth 的值输出对应数量的空格，然后输出节点内容 s，最后换行
+}
+
+//根据FIRST集判断候选式
+void P(int treeWidth) {
+	if (findTerminal < str.size()) {//检查是否已经达到了输入字符串的末尾
+		//检查当前输入的符号是否为 "if"、"while" 或一个标识符
+		//如果是，则构建一个节点表示非终结符 P，然后调用其他函数 L 和 P1 来处理更深层次的语法规则
+		if (str[findTerminal] == "if" || str[findTerminal] == "while" || isId(str[findTerminal])) {
+			BuiltTree("P", treeWidth);
+			L(treeWidth + 1);
+			P1(treeWidth + 1);
+		}
+		else {
+			cout << "ERROR";
+			exit(0);
+		}
+	}
+	else {
+		cout << "ERROR";
+		exit(0);
+	}
+}
+void L(int treeWidth) {
+	if (findTerminal < str.size()) {
+		if (str[findTerminal] == "while" || str[findTerminal] == "if" || isId(str[findTerminal])) {
+			BuiltTree("L", treeWidth);
+			S(treeWidth + 1);
+			if (str[findTerminal] == ";") {
+				findTerminal++;
+				BuiltTree(";", treeWidth + 1);
+			}
+			else {
+				cout << "ERROR";
+				exit(0);
+			}
+		}
+		else {
+			cout << "ERROR";
+			exit(0);
+		}
+	}
+	else {
+		cout << "ERROR";
+		exit(0);
+	}
+}
+void P1(int treeWidth) {
+	if (findTerminal < str.size()) {
+		if (str[findTerminal] == "if" || str[findTerminal] == "while" || isId(str[findTerminal])) {
+			BuiltTree("P1", treeWidth);
+			P(treeWidth + 1);
+		}
+		else {
+			cout << "error";
+			exit(0);
+		}
+	}
+	else {//空集情况构建一个表示空节点的子树，以示语法结构的结束
+		BuiltTree("P1", treeWidth);
+		BuiltTree("null", treeWidth + 1);
+	}
+}
+void S(int treeWidth) {
+	if (findTerminal < str.size()) {
+		if (str[findTerminal] == "if") {
+			BuiltTree("S", treeWidth);
+			BuiltTree("if", treeWidth + 1);
+			findTerminal++;
+			C(treeWidth + 1);
+			if (str[findTerminal] == "then") {
+				BuiltTree("then", treeWidth + 1);
+				findTerminal++;
+				S(treeWidth + 1);
+				S1(treeWidth + 1);
+			}
+			else {
+				cout << "error";
+				exit(0);
+			}
+		}
+		else if (str[findTerminal] == "while") {
+			BuiltTree("S", treeWidth);
+			BuiltTree("while", treeWidth + 1);
+			findTerminal++;
+			C(treeWidth + 1);
+			if (str[findTerminal] == "do") {
+				BuiltTree("do", treeWidth + 1);
+				findTerminal++;
+				S(treeWidth + 1);
+			}
+			else {
+				cout << "error";
+				exit(0);
+			}
+		}
+		else if (isId(str[findTerminal])) {
+			BuiltTree("S", treeWidth);
+			BuiltTree(str[findTerminal], treeWidth + 1);
+			findTerminal++;
+			if (str[findTerminal] == "=") {
+				findTerminal++;
+				BuiltTree("=", treeWidth + 1);
+			}
+			else {
+				cout << "error";
+				exit(0);
+			}
+			E(treeWidth + 1);
+		}
+		else {
+			cout << "error";
+			exit(0);
+		}
+	}
+	else {
+		cout << "error";
+		exit(0);
+	}
+
+}
+void S1(int treeWidth) {
+	if (findTerminal < str.size()) {
+		if (str[findTerminal] == "else") {
+			BuiltTree("S1", treeWidth);
+			BuiltTree("else", treeWidth + 1);
+			findTerminal++;
+			S(treeWidth + 1);
+		}
+		else if (str[findTerminal] == ";") {
+			BuiltTree("S1", treeWidth);
+			BuiltTree("null", treeWidth + 1);
+		}
+		else {
+			cout << "error";
+			exit(0);
+		}
+	}
+	else {
+		BuiltTree("S1", treeWidth);
+		BuiltTree("null", treeWidth + 1);
+	}
+}
+void C(int treeWidth) {
+	if (findTerminal < str.size()) {
+		if (str[findTerminal] == "(" || isId(str[findTerminal])) {
+			BuiltTree("C", treeWidth);
+			E(treeWidth + 1);
+			C1(treeWidth + 1);
+		}
+		else {
+			cout << "error";
+			exit(0);
+		}
+	}
+	else {
+		cout << "error";
+		exit(0);
+	}
+
+}
+void C1(int treeWidth) {
+	if (findTerminal < str.size()) {
+		if (str[findTerminal] == ">") {
+			BuiltTree("C1", treeWidth);
+			BuiltTree(">", treeWidth + 1);
+			findTerminal++;
+			E(treeWidth + 1);
+		}
+		else if (str[findTerminal] == "<") {
+			BuiltTree("C1", treeWidth);
+			BuiltTree("<", treeWidth + 1);
+			findTerminal++;
+			E(treeWidth + 1);
+		}
+		else if (str[findTerminal] == "=") {
+			BuiltTree("C1", treeWidth);
+			BuiltTree("=", treeWidth + 1);
+			findTerminal++;
+			E(treeWidth + 1);
+		}
+		else if (str[findTerminal] == ">=") {
+			BuiltTree("C1", treeWidth);
+			BuiltTree(">=", treeWidth + 1);
+			findTerminal++;
+			E(treeWidth + 1);
+		}
+		else if (str[findTerminal] == "<=") {
+			BuiltTree("C1", treeWidth);
+			BuiltTree("<=", treeWidth + 1);
+			findTerminal++;
+			E(treeWidth + 1);
+		}
+		else if (str[findTerminal] == "<>") {
+			BuiltTree("C1", treeWidth);
+			BuiltTree("<>", treeWidth + 1);
+			findTerminal++;
+			E(treeWidth + 1);
+		}
+		else {
+			cout << "error";
+			exit(0);
+		}
+	}
+	else {
+		cout << "error";
+		exit(0);
+	}
+}
+void E(int treeWidth) {
+	if (findTerminal < str.size()) {
+		if (str[findTerminal] == "(" || isId(str[findTerminal])) {
+			BuiltTree("E", treeWidth);
+			T(treeWidth + 1);
+			E1(treeWidth + 1);
+		}
+		else {
+			cout << "error";
+			exit(0);
+		}
+	}
+	else {
+		cout << "error";
+		exit(0);
+	}
+}
+void E1(int treeWidth) {
+	if (findTerminal < str.size()) {
+		if (str[findTerminal] == "+") {
+			BuiltTree("E1", treeWidth);
+			BuiltTree("+", treeWidth + 1);
+			findTerminal++;
+			T(treeWidth + 1);
+			E1(treeWidth + 1);
+		}
+		else if (str[findTerminal] == "-") {
+			BuiltTree("E1", treeWidth);
+			BuiltTree("-", treeWidth + 1);
+			findTerminal++;
+			T(treeWidth + 1);
+			E1(treeWidth + 1);
+		}
+		else if (str[findTerminal] == ">" || str[findTerminal] == "<" || str[findTerminal] == "=" || str[findTerminal] == ">=" || str[findTerminal] == "<=" || str[findTerminal] == "<>" || str[findTerminal] == ")" || str[findTerminal] == "do" || str[findTerminal] == "then" || str[findTerminal] == ";" || str[findTerminal] == "*" || str[findTerminal] == "/" || str[findTerminal] == "while" || str[findTerminal] == "if") {
+			BuiltTree("E1", treeWidth);
+			BuiltTree("null", treeWidth + 1);
+		}
+		else {
+			cout << "error";
+			exit(0);
+		}
+	}
+	else {
+		BuiltTree("E1", treeWidth);
+		BuiltTree("null", treeWidth + 1);
+	}
+}
+void T(int treeWidth) {
+	if (findTerminal < str.size()) {
+		if (str[findTerminal] == "(" || isId(str[findTerminal])) {
+			BuiltTree("T", treeWidth);
+			F(treeWidth + 1);
+			T1(treeWidth + 1);
+		}
+		else {
+			cout << "Error";
+			exit(0);
+		}
+	}
+	else {
+		cout << "Error";
+		exit(0);
+	}
+
+}
+void T1(int treeWidth) {
+	if (findTerminal < str.size()) {
+		if (str[findTerminal] == "*") {
+			BuiltTree("T1", treeWidth);
+			BuiltTree("*", treeWidth + 1);
+			findTerminal++;
+			F(treeWidth + 1);
+			T1(treeWidth + 1);
+		}
+		else if (str[findTerminal] == "/") {
+			BuiltTree("T1", treeWidth);
+			BuiltTree("/", treeWidth + 1);
+			findTerminal++;
+			F(treeWidth + 1);
+			T1(treeWidth + 1);
+		}
+		else if (str[findTerminal] == "+" || str[findTerminal] == "-" || str[findTerminal] == ">" || str[findTerminal] == "<" || str[findTerminal] == "=" || str[findTerminal] == ">=" || str[findTerminal] == "<=" || str[findTerminal] == "<>" || str[findTerminal] == ")" || str[findTerminal] == "do" || str[findTerminal] == "then" || str[findTerminal] == ";" || str[findTerminal] == "while" || str[findTerminal] == "if") {
+			BuiltTree("T1", treeWidth);
+			BuiltTree("null", treeWidth + 1);
+		}
+		else {
+			cout << "Error";
+			exit(0);
+		}
+	}
+	else {
+		BuiltTree("T1", treeWidth);
+		BuiltTree("null", treeWidth + 1);
+	}
+}
+void F(int treeWidth) {
+	if (findTerminal < str.size()) {
+		if (str[findTerminal] == "(") {
+			BuiltTree("F", treeWidth);
+			BuiltTree("(", treeWidth + 1);
+			findTerminal++;
+			E(treeWidth + 1);
+			if (str[findTerminal] == ")") {
+				findTerminal++;
+				BuiltTree(")", treeWidth + 1);
+			}
+			else {
+				cout << "Error";
+				exit(0);
+			}
+		}
+		else if (isId(str[findTerminal])) {
+			BuiltTree("F", treeWidth);
+			BuiltTree(str[findTerminal], treeWidth + 1);
+			BuiltTree(str[findTerminal], treeWidth + 1);
+			findTerminal++;
+		}
+		else {
+			cout << "Error";
+			exit(0);
+		}
+	}
+	else {
+		cout << "Error";
+		exit(0);
+	}
+}
+
+int main(void) {
+	ifstream ReadFile;
+	string tmp;
+	ReadFile.open("test.txt");
+	if (ReadFile.fail())
+	{
+		return 0;
+	}
+	else {
+		while (getline(ReadFile, tmp))
+		{
+			stringstream ss(tmp);
+			string substr;
+			while (ss >> substr) {
+				str.push_back(substr);
+			}
+			cout << tmp << endl;
+		}
+		P(0);
+		ReadFile.close();
+	}
+	cout << "correct";
+	return 0;
+}
