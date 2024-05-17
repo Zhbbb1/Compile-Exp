@@ -1,0 +1,111 @@
+%option noyywrap
+%option yylineno
+%{
+#include <stdio.h>
+#include <math.h>
+%}
+
+
+%%
+"if"      printf("IF     -\n"); 
+"else"    printf("ELSE   -\n"); 
+"then"    printf("THEN   -\n");
+"do"      printf("DO     -\n");
+"begin"  printf("BEGIN  -\n");
+"end"    printf("END    -\n");
+"while"   printf("WHILE  -\n");
+
+"+" printf("ADD    -\n");
+"-" printf("SUB    -\n");
+"*" printf("MUL    -\n");
+"/"   printf("DIV    -\n");
+">" printf("GT     -\n");
+"<" printf("LT     -\n");
+"=" printf("EQ     -\n");
+">=" printf("GE     -\n");
+"<=" printf("LE     -\n");
+"<>" printf("NEQ    -\n");
+"(" printf("SLP    -\n");
+")" printf("SRP    -\n");
+";" printf("SEMI   -\n");
+
+
+[a-zA-Z]([a-zA-Z]|[0-9])*  {printf("IDN   %s\n", yytext);}
+0|([1-9][0-9]*)  {printf("DEC   %s\n", yytext);}
+0[0-7]+  {printf("OCT   %d\n", r8(yytext));}
+0[xX][a-fA-F0-9]+  {printf("HEX   %d\n", r16(yytext));}
+0[0-9]*[89]+[0-9]*  {printf("ILOCT  -\n");}
+0[xX][a-zA-Z0-9]*[g-zG-Z]+[a-zA-Z0-9]*  {printf("ILHEX  -\n");}
+[ \n] {}
+[ \r\t] {}   //回车或者 tab
+[ \n\t]+ {}
+.   printf("error \n");
+
+%%
+
+int r16(char* strHex)
+{   
+     int i = 0, len = 0, temp = 0;  
+     int num = 0;  
+    for(len = 0;  strHex[i] != '\0'; len++,i++) 
+	{}
+    for (i = len - 1 ; strHex[i] != '\0'&& i >=2 ; i--)  
+    {  
+        switch(strHex[i])  
+        {  
+        case 'A': temp = 10; break;  
+        case 'B': temp = 11; break;  
+        case 'C': temp = 12; break;  
+        case 'D': temp = 13; break;  
+        case 'E': temp = 14; break;  
+        case 'F': temp = 15; break;  
+        case 'a': temp = 10; break;  
+        case 'b': temp = 11; break;  
+        case 'c': temp = 12; break;  
+        case 'd': temp = 13; break;  
+        case 'e': temp = 14; break;  
+        case 'f': temp = 15; break;  
+        default: temp = strHex[i]-'0' ; break;  
+        }  
+        num += (temp*pow(16, len - 1 - i));  
+    }  
+    return num;
+}
+
+int r8(char* strHex)
+{    
+int i = 0, len = 0, temp = 0;  
+    int num = 0;  
+    for(len = 0;  strHex[i] != '\0'; len++,i++) {;}
+    for (i = len - 1 ; strHex[i] != '\0'&& i >=1 ; i--)  //此处也可为i++
+    {  
+        temp = strHex[i]-'0' ; 
+        num += (temp*pow(8, len - 1 - i));  
+    }  
+    return num;
+}
+
+int main(int argc)
+{
+
+  yylex();
+  yywrap();
+}
+
+ /* if (argc>1)
+  {
+    FILE *file;
+	file=fopen("D:\abc\T4\2.txt","r");
+	if(file)
+	  yyin=file;
+  }
+  if (argc>2)
+  {
+	FILE *file;
+	file=fopen("D:\abc\T4\3.txt","w");
+	if(file)
+	{
+	  yyout=file;
+	  //freopen("D:\abc\T4\3.txt","w",stdout);
+	 }
+  }*/
